@@ -1,0 +1,17 @@
+[submodule "DS-SLAM"]
+	path = DS-SLAM
+	url = https://github.com/xiosi/DS-SLAM.git
+[submodule "thirdparty/Pangolin"]
+	path = thirdparty/Pangolin
+	url = https://github.com/xiosi/Pangolin.git
+	branch = v0.6
+[submodule "thirdparty/caffe-segnet"]
+	path = thirdparty/caffe-segnet
+	url = https://github.com/xiosi/caffe-segnet
+[submodule "thirdparty/octomap_mapping"]
+	path = thirdparty/octomap_mapping
+	url = https://github.com/xiosi/octomap_mapping
+[submodule "thirdparty/octomap_rviz_plugins"]
+	path = thirdparty/octomap_rviz_plugins
+	url = https://github.com/xiosi/octomap_rviz_plugins
+

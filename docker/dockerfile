@@ -1,0 +1,133 @@
+FROM yubaoliu/root:ros-cuda10.0-cudnn7-ubuntu16.04
+
+#nvidia key vailable: NO_PUBKEY A4B469963BF
+RUN rm /etc/apt/sources.list.d/cuda.list
+RUN rm /etc/apt/sources.list.d/nvidia-ml.list
+ADD   https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-keyring_1.0-1_all.deb .
+RUN   dpkg -i cuda-keyring_1.0-1_all.deb
+
+WORKDIR /root/
+#ros  signatures were invalid: KEYEXPIRED 1622248854
+ADD . ./final-slam
+RUN apt-key add ./final-slam/docker/ros.asc \
+    && sed -i s/archive.ubuntu.com/mirrors.aliyun.com/g /etc/apt/sources.list
+# RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
+
+RUN apt update \
+    &&  apt install -f \
+    && apt install -y  libglew-dev \
+       libxkbcommon-dev \
+       cmake-qt-gui \
+       libgoogle-glog-dev \
+       ros-kinetic-octomap-ros \
+       libatlas-base-dev \
+       libgflags-dev \
+       libhdf5-serial-dev \
+       libleveldb-dev \
+       liblmdb-dev \
+       libopencv-dev \
+       libprotobuf-dev \
+       libsnappy-dev \
+       protobuf-compiler \
+       python-numpy \
+       python-tk \
+       libeigen3-dev
+
+## update pip 2&3 the same url?
+# RUN curl -kL https://bootstrap.pypa.io/pip/2.7/get-pip.py | python  \
+#     && curl -kL https://bootstrap.pypa.io/pip/3.5/get-pip.py | python3 
+# ADD ./get-pip2.py
+RUN /usr/bin/python -m pip install --upgrade pip
+
+#change source
+RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple \
+    && pip config set install.trusted-host mirrors.aliyun.com
+RUN pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple \
+    && pip3 config set install.trusted-host mirrors.aliyun.com
+ 
+## coco API
+
+# RUN pip2 install git+https://github.com/philferriere/cocoapi.git#subdirectory=PythonAPI
+# RUN pip3 install git+https://github.com/philferriere/cocoapi.git#subdirectory=PythonAPI
+RUN pip2 install git+https://gitee.com/wsyin/cocoapi.git#subdirectory=PythonAPI
+RUN pip3 install git+https://gitee.com/wsyin/cocoapi.git#subdirectory=PythonAPI
+
+# Install mask rcnn dependencies
+COPY docker/requirements.txt /root/requirements.txt
+
+RUN  pip2 install  -r /root/requirements.txt --ignore-installed enum34
+RUN  pip3 install  -r /root/requirements.txt
+
+
+# Download Maskrcnn modle
+# RUN mkdir /root/cnnmodel \
+#    && cd /root/cnnmodel \
+#    && wget -c http://mi.eng.cam.ac.uk/~agk34/resources/SegNet/segnet_pascal.caffemodel
+
+RUN mkdir /root/cnnmodel \
+#    && wget https://www.dropbox.com/s/fa3itnxxbw3pgn9/segnet_pascal.caffemodel?dl=0
+    && mv /root/final-slam/thirdparty/download/segnet_pascal.caffemodel /root/cnnmodel
+
+#set git proxy
+# RUN git config --global https.proxy https://127.0.0.1:8889 \
+#     && git config --global http.proxy http://127.0.0.1:8889
+
+#Pangolin
+RUN cd /root/final-slam/thirdparty/Pangolin \
+    && mkdir build \
+    && cd build \
+    && cmake .. -DCMAKE_BUILD_TYPE=Debug \
+    && make -j 3 \
+    && make install
+
+## Sophus
+#RUN git clone https://github.com/yubaoliu/Sophus.git \
+#    && cd Sophus \
+#    && git checkout master \
+#    && mkdir build \
+#    && cd build \
+#    && cmake .. -DCMAKE_BUILD_TYPE=Debug \
+#    && make -j3 \
+#    && make install 
+
+# G2O
+#RUN git clone https://github.com/yubaoliu/g2o.git \
+#   && cd g2o \
+#   && mkdir build \
+#   && cd build \
+#   && cmake .. -DCMAKE_BUILD_TYPE=Debug \
+#   && make -j 3 \
+#   && make install \
+#   && cmake .. -DCMAKE_BUILD_TYPE=Release \
+#   && make -j 3 \
+#   && make install
+
+## TUM Benchmark
+#RUN cd /root \
+#    && svn checkout https://svncvpr.in.tum.de/cvpr-ros-pkg/trunk/rgbd_benchmark/rgbd_benchmark_tools
+
+
+## Caffe-SegNet
+#RUN  git clone https://github.com/yubaoliu/caffe-segnet.git \
+RUN cd /root/final-slam/thirdparty/caffe-segnet \
+   && mkdir build  \
+   && cd build \
+   && cmake .. -DCMAKE_BUILD_TYPE=Release  -DCMAKE_INSTALL_PREFIX=/usr/local \
+   && make -j 2 \
+   && make install 
+
+
+WORKDIR /root/catkin_ws/src
+# Octomap
+RUN mv /root/final-slam/thirdparty/octomap_mapping /root/catkin_ws/src  \
+    && mv /root/final-slam/thirdparty/octomap_rviz_plugins /root/catkin_ws/src 
+#    && cd /root/catkin_ws \
+#    && /bin/bash -c "source /opt/ros/kinetic/setup.bash & catkin_make"
+
+# # Load ROS environment at each run
+COPY ./docker/ros_entrypoint.sh /
+RUN chmod 755 /ros_entrypoint.sh
+ENTRYPOINT ["/ros_entrypoint.sh"]
+
+
+CMD ["bash"]

@@ -1,0 +1,33 @@
+version: '3.4'
+services:
+  dsslam:
+    image: xiosi/root:final-slam
+    network_mode: host
+    build:
+        context: ../
+        network: host
+    container_name: dsslam-cuda10
+    privileged: true
+    # runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            count: all
+            capabilities: [gpu, compute,utility]
+    command: xterm
+         # lxterminal
+    environment:
+        - DISPLAY
+        - QT_X11_NO_MITSHM=1
+    volumes:
+        - /tmp/.X11-unix:/tmp/.X11-unix:rw
+        - ../DS-SLAM:/root/catkin_ws/src/DS-SLAM
+        - ../thirdparty/caffe-segnet:/root/final-slam/thirdparty/caffe-segnet
+        - ./ros_entrypoint.sh:/root/ros_entrypoint.sh
+        - ${DATASET_DIR}:/root/Dataset
+        # - orbslam3:/root
+    entrypoint: /root/final-slam/docker/entrypoint.sh #container inside dir
+# volumes:
+     # dsslam:
