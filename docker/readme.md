@@ -9,3 +9,6 @@ docker-compose build \
 
 ## display
 xhost +
+
+## pangolin test
+set(CMAKE_CXX_FLAGS "-std=c++11")

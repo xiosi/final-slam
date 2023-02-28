@@ -18,3 +18,5 @@ clean:
 up:
 	@docker-compose -f docker/docker-compose.yml up
 
+exec:
+	@docker exec -it dsslam-cuda10 /bin/bash

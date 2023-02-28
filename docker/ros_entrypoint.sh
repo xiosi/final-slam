@@ -23,5 +23,6 @@ echo "Build DSSLAM"
 cd /root/catkin_ws/src/DS-SLAM
 bash DS_SLAM_BUILD.sh
 
+cd /root/catkin_ws
 # exec "$@"
 

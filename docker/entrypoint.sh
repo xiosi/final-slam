@@ -8,5 +8,5 @@ source "/root/catkin_ws/devel/setup.bash"
 
 bash /root/ros_entrypoint.sh
 
-
+cd /root/catkin_ws
 exec "$@"

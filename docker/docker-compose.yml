@@ -9,18 +9,24 @@ services:
     container_name: dsslam-cuda10
     privileged: true
     # runtime: nvidia
+    devices:
+      - /dev/nvidia0
+      - /dev/nvidia-uvm
+      - /dev/nvidia-uvm-tools
     deploy:
       resources:
         reservations:
           devices:
           - driver: nvidia
             count: all
-            capabilities: [gpu, compute,utility]
+            # capabilities: [gpu, compute,utility]
+            capabilities: [gpu,compat32, compute,utility,graphics]
     command: xterm
          # lxterminal
     environment:
-        - DISPLAY
+        - DISPLAY=:1
         - QT_X11_NO_MITSHM=1
+        - LIBGL_ALWAYS_INDIRECT=1
     volumes:
         - /tmp/.X11-unix:/tmp/.X11-unix:rw
         - ../DS-SLAM:/root/catkin_ws/src/DS-SLAM
